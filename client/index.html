@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Tay Tình Yêu</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="login-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999;background:#f4faffee;display:flex;align-items:center;justify-content:center;">
+      <form id="login-form" style="background:white;padding:36px 32px 32px 32px;border-radius:18px;box-shadow:0 4px 22px #2A95BF30;min-width:320px;">
+        <h2 style="margin-bottom:18px;text-align:center;color:#2A95BF;">Đăng nhập</h2>
+        <div class="form-group">
+          <label for="login-username">Tên đăng nhập</label>
+          <input type="text" id="login-username" required style="width:100%;padding:12px 10px;border-radius:8px;border:1px solid #73C6D9;">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Mật khẩu</label>
+          <input type="password" id="login-password" required style="width:100%;padding:12px 10px;border-radius:8px;border:1px solid #73C6D9;">
+        </div>
+        <div id="login-error" style="color:#f44336;text-align:center;margin-bottom:12px;display:none;"></div>
+        <button type="submit" style="width:100%;padding:13px;border-radius:9px;background:#2A95BF;color:white;font-weight:bold;border:none;font-size:1.1em;cursor:pointer;">Đăng nhập</button>
+      </form>
+    </div>
+    <div class="main-wrapper">
+        <div class="corner-top-right"></div>
+        <div class="corner-bottom-left"></div>
+        <header>
+            <h1><span class="heart-icon">💙</span> Sổ Tay Tình Yêu của Chúng Ta <span class="heart-icon">💙</span></h1>
+            <div class="header-wave"></div>
+        </header>
+        <div id="together-timer" class="together-timer">
+            <span>Chúng ta đã bên nhau:</span>
+            <span id="timer-value">-- năm -- tháng -- ngày --:--:--</span>
+        </div>
+        <div class="content-container">
+            <div class="panel-wrapper">
+                <section class="panel left-panel">
+                    <h2>Lưu giữ kỷ niệm</h2>
+                    <form id="diary-form">
+                        <input type="hidden" id="entry-id">
+                        <div class="form-group">
+                            <label for="date">Ngày:</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">Bạn là:</label>
+                            <select id="author" required>
+                                <option value="Anh đíc thúi">Anh đíc thúi</option>
+                                <option value="Em daika hn">Em daika hn</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="title">Tên kỷ niệm</label>
+                            <input type="text" id="title" placeholder="Ghi tên kỷ niệm" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">Nội dung kỷ niệm</label>
+                            <textarea id="content" placeholder="Kể chi tiết kỷ niệm của bạn"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="media-upload" class="file-upload-label">
+                                <span class="upload-icon">🏞️</span> Thêm ảnh/video
+                            </label>
+                            <input type="file" id="media-upload" accept="image/*,video/*" multiple class="hidden-file-input">
+                        </div>
+                        <div id="old-media-list"></div>
+                        <div id="selected-files-list"></div>
+                        <div class="form-actions">
+                            <button type="submit" id="submit-btn">Lưu lại</button>
+                            <button type="button" id="cancel-edit-btn" style="display: none;">Hủy chỉnh sửa</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+            <div class="panel-wrapper">
+                <section class="panel right-panel">
+                    <h2>Hành trình đã qua</h2>
+                    <div id="diary-entries-grid"></div>
+                    <!-- PHÂN TRANG -->
+                    <div class="pagination" id="pagination-controls"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-modal="delete-modal">&times;</span>
+            <p>Bạn có chắc chắn muốn xóa kỷ niệm này?</p>
+            <div class="modal-buttons">
+                <button id="confirm-delete-btn">Xóa</button>
+                <button id="cancel-delete-btn">Hủy</button>
+            </div>
+        </div>
+    </div>
+    <div id="notification-message"></div>
+    <div id="full-entry-modal" class="modal">
+        <div class="modal-content-full">
+            <div class="corner-top-right"></div>
+            <div class="corner-bottom-left"></div>
+            <span class="close-btn-full" data-modal="full-entry-modal">&times;</span>
+            <div id="full-entry-content">
+                <div class="full-entry-media" id="full-modal-media-slider">
+                    <button id="media-prev-btn" class="media-arrow-btn">&#8592;</button>
+                    <div id="media-slider-inner"></div>
+                    <button id="media-next-btn" class="media-arrow-btn">&#8594;</button>
+                </div>
+                <div class="full-entry-details">
+                    <h3 id="full-modal-title"></h3>
+                    <p class="full-modal-author-date">
+                        <span id="full-modal-author"></span> -
+                        <span id="full-modal-date"></span>
+                    </p>
+                    <p id="full-modal-content"></p>
+                    <div class="full-entry-actions">
+                        <button class="like-btn" id="full-modal-like-btn">❤️ <span id="full-modal-likes">0</span></button>
+                        <button class="comment-btn" id="full-modal-comment-btn">💬 Bình luận</button>
+                    </div>
+                    <div id="comments-section">
+                        <h4>Bình luận</h4>
+                        <div id="comments-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="zoom-media-modal" class="modal">
+        <div class="corner-top-right"></div>
+        <div class="corner-bottom-left"></div>
+        <span class="close-btn-full" id="close-zoom-media">&times;</span>
+        <div class="zoom-media-content">
+            <div id="zoom-media-display"></div>
+        </div>
+    </div>
+    <div id="comment-modal" class="modal">
+        <div class="modal-content-comment">
+            <span class="close-btn" data-modal="comment-modal">&times;</span>
+            <h4 id="comment-modal-title">Thêm bình luận</h4>
+            <div class="form-group">
+                <label for="comment-author">Bạn đang bình luận với vai trò:</label>
+                <select id="comment-author" required>
+                    <option value="Anh đíc thúi">Anh đíc thúi</option>
+                    <option value="Em daika hn">Em daika hn</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <textarea id="comment-text" placeholder="Viết bình luận của bạn..."></textarea>
+            </div>
+            <button id="submit-comment-btn">Gửi</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
