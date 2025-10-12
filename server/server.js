@@ -318,6 +318,6 @@ app.delete('/api/diary/:id/comment/:commentId', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server đang chạy tại http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Server đang chạy tại http://localhost:${PORT}`);
 });
