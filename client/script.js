@@ -1,4 +1,4 @@
-const API_BASE_URL = window.location.origin + '/api/diary';
+const BASE_URL = ";https://love-d-ay-2.onrender.com/";
 
 let currentEntryId = null;
 let currentCommentId = null;
