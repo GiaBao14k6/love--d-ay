@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000/api/diary';
+const API_BASE_URL = window.location.origin + '/api/diary';
 
 let currentEntryId = null;
 let currentCommentId = null;
