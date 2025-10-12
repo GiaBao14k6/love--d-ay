@@ -1,7 +1,7 @@
 require('dotenv').config();
 const SECRET_KEY = process.env.SECRET_KEY;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/love-diary';
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -17,7 +17,7 @@ const USERS = [
 ];
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
