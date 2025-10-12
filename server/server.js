@@ -29,12 +29,10 @@ mongoose.connect(MONGODB_URI, {
 app.use(express.json());
 app.use(cors());
 
-// Serve static folders for client and assets
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/', express.static(path.join(__dirname, '../client')));
 app.use('/uploads', express.static(uploadDir));
 
-// JWT authentication middleware
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ message: "Cần đăng nhập" });
@@ -49,7 +47,6 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// Login endpoint (POST /api/login)
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const user = USERS.find(u => u.username === username && u.password === password);
@@ -127,7 +124,6 @@ function uploadHandler(req, res, next) {
     });
 }
 
-// Get diary entries (public)
 app.get('/api/diary', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -141,7 +137,6 @@ app.get('/api/diary', async (req, res) => {
     }
 });
 
-// Get single diary entry (public)
 app.get('/api/diary/:id', async (req, res) => {
     try {
         const entry = await DiaryEntry.findById(req.params.id);
@@ -154,7 +149,6 @@ app.get('/api/diary/:id', async (req, res) => {
     }
 });
 
-// Create diary entry (protected)
 app.post('/api/diary', authMiddleware, uploadHandler, async (req, res) => {
     const filesToDelete = req.files ? req.files.map(f => f.filename) : [];
     const newEntry = new DiaryEntry({
@@ -173,7 +167,6 @@ app.post('/api/diary', authMiddleware, uploadHandler, async (req, res) => {
     }
 });
 
-// Update diary entry (protected)
 app.put('/api/diary/:id', authMiddleware, uploadHandler, async (req, res) => {
     let entry;
     try {
@@ -194,7 +187,6 @@ app.put('/api/diary/:id', authMiddleware, uploadHandler, async (req, res) => {
         const newMedia = req.files ? req.files.map(f => f.filename) : [];
         const finalMedia = [...mediaToKeep, ...newMedia];
 
-        // Xóa các file media không còn giữ lại
         const toDelete = entry.media.filter(fn => !mediaToKeep.includes(fn));
         if (toDelete.length > 0) await deleteMediaFiles(toDelete);
 
@@ -203,14 +195,12 @@ app.put('/api/diary/:id', authMiddleware, uploadHandler, async (req, res) => {
         const updatedEntry = await entry.save();
         res.json(updatedEntry);
     } catch (err) {
-        // Nếu lỗi, xóa các file mới upload ở lần sửa này
         const filesToDelete = req.files ? req.files.map(f => f.filename) : [];
         if (filesToDelete.length > 0) await deleteMediaFiles(filesToDelete);
         res.status(400).json({ message: err.message });
     }
 });
 
-// Delete diary entry (protected)
 app.delete('/api/diary/:id', authMiddleware, async (req, res) => {
     try {
         const entry = await DiaryEntry.findById(req.params.id);
@@ -227,7 +217,6 @@ app.delete('/api/diary/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// Like/dislike/comment routes (public, or add authMiddleware if you want)
 app.post('/api/diary/:id/like', async (req, res) => {
     try {
         const entry = await DiaryEntry.findById(req.params.id);
@@ -252,7 +241,6 @@ app.post('/api/diary/:id/dislike', async (req, res) => {
     }
 });
 
-// Comments
 app.post('/api/diary/:id/comment', async (req, res) => {
     try {
         const { author, content } = req.body;
