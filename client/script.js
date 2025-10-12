@@ -1,4 +1,5 @@
-const BASE_URL = ";https://love-d-ay-2.onrender.com/";
+const BASE_URL = "https://love-d-ay-2.onrender.com";
+const API_BASE_URL = BASE_URL + "/api/diary";
 
 let currentEntryId = null;
 let currentCommentId = null;
@@ -39,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTogetherTimer();
   setInterval(updateTogetherTimer, 1000);
 
-  // Đăng nhập JWT
   const loginModal = document.getElementById('login-modal');
   const loginForm = document.getElementById('login-form');
   const loginError = document.getElementById('login-error');
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value.trim();
     try {
-      const resp = await fetch('http://localhost:3000/api/login', {
+      const resp = await fetch(BASE_URL + '/api/login', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ username, password })
@@ -289,8 +289,8 @@ function createDiaryEntryDiv(entry) {
     const firstFile = entry.media[0];
     const ext = firstFile.split('.').pop().toLowerCase();
     const isVideo = ['mp4', 'mov', 'webm'].includes(ext);
-    if (isVideo) mediaHtml = `<video src="http://localhost:3000/uploads/${firstFile}"></video>`;
-    else mediaHtml = `<img src="http://localhost:3000/uploads/${firstFile}" alt="Kỷ niệm">`;
+    if (isVideo) mediaHtml = `<video src="${BASE_URL}/uploads/${firstFile}"></video>`;
+    else mediaHtml = `<img src="${BASE_URL}/uploads/${firstFile}" alt="Kỷ niệm">`;
   }
   entryDiv.innerHTML = `
     <div class="entry-actions">
@@ -355,7 +355,7 @@ function renderMediaSlider() {
   const file = currentMediaList[currentMediaIndex];
   const ext = file.split('.').pop().toLowerCase();
   const isVideo = ['mp4', 'mov', 'webm'].includes(ext);
-  const url = `http://localhost:3000/uploads/${file}`;
+  const url = `${BASE_URL}/uploads/${file}`;
   if (isVideo) {
     const v = document.createElement('video');
     v.src = url;
@@ -383,7 +383,7 @@ function renderMediaSlider() {
 function openZoomMedia(file, type) {
   const zoomDisplay = document.getElementById('zoom-media-display');
   zoomDisplay.innerHTML = "";
-  const url = `http://localhost:3000/uploads/${file}`;
+  const url = `${BASE_URL}/uploads/${file}`;
   if (type === "video") {
     const v = document.createElement('video');
     v.src = url;
@@ -652,9 +652,9 @@ function renderOldMediaList() {
     const isVideo = ['mp4', 'mov', 'webm'].includes(ext);
     let thumb;
     if (isVideo)
-      thumb = `<video src="http://localhost:3000/uploads/${filename}" muted></video>`;
+      thumb = `<video src="${BASE_URL}/uploads/${filename}" muted></video>`;
     else
-      thumb = `<img src="http://localhost:3000/uploads/${filename}" alt="">`;
+      thumb = `<img src="${BASE_URL}/uploads/${filename}" alt="">`;
     list.innerHTML += `
       <div class="old-media-item">
         ${thumb}
