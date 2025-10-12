@@ -17,7 +17,6 @@ const USERS = [
 ];
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
