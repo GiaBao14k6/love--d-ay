@@ -118,7 +118,7 @@ async function deleteMediaFiles(mediaFiles) {
             await fs.promises.unlink(filePath);
         } catch (err) {
             if (err.code !== 'ENOENT') {
-                console.error(`Không thể xóa file ${filePath}:`, err);
+                console.error('Không thể xóa file:', filename, err.message);
             }
         }
     }
