@@ -1,4 +1,5 @@
-const BASE_URL = "https://love-d-ay-2.onrender.com";
+// Flexible BASE_URL: use window.__API_BASE_URL if set, otherwise use window.location.origin for local development
+const BASE_URL = (typeof window !== 'undefined' && window.__API_BASE_URL) ? window.__API_BASE_URL : (typeof window !== 'undefined' ? window.location.origin : "https://love-d-ay-2.onrender.com");
 const API_BASE_URL = BASE_URL + "/api/diary";
 
 let currentEntryId = null;
@@ -67,7 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ username, password })
       });
-      const data = await resp.json();
+      let data;
+      try {
+        data = await resp.json();
+      } catch {
+        loginError.style.display = 'block';
+        loginError.textContent = 'Server trả về phản hồi không hợp lệ!';
+        return;
+      }
       if (resp.ok && data.token) {
         localStorage.setItem('jwt_token', data.token);
         hideLogin();
@@ -234,7 +242,12 @@ async function fetchDiaryEntries(page = 1, append = false) {
   try {
     const response = await fetch(`${API_BASE_URL}?page=${page}&limit=${PAGE_SIZE}`);
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: 'Lỗi không xác định từ server.' };
+      }
       showNotification(errorData.message || 'Không thể tải nhật ký.', true);
       isLoading = false;
       return;
@@ -315,7 +328,12 @@ async function showFullEntryModal(id) {
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`);
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: 'Lỗi không xác định từ server.' };
+      }
       showNotification(errorData.message || 'Không thể tải chi tiết.', true);
       return;
     }
@@ -610,7 +628,12 @@ async function handleFormSubmit(event) {
       currentPage = 1;
       fetchDiaryEntries(currentPage);
     } else {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: 'Lỗi không xác định từ server.' };
+      }
       showNotification(errorData.message || 'Có lỗi xảy ra, vui lòng thử lại.', true);
     }
   } catch (err) {
@@ -622,13 +645,27 @@ async function editDiaryEntry(id) {
   try {
     const response = await fetch(`${API_BASE_URL}/${id}`);
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: 'Lỗi không xác định từ server.' };
+      }
       showNotification(errorData.message || 'Không thể lấy thông tin nhật ký.', true);
       return;
     }
     const entry = await response.json();
     document.getElementById('entry-id').value = entry._id;
-    document.getElementById('date').value = entry.date.split('T')[0];
+    
+    // Safe date parsing with try/catch
+    try {
+      const dateValue = new Date(entry.date).toISOString().split('T')[0];
+      document.getElementById('date').value = dateValue;
+    } catch (err) {
+      console.error('Error parsing date:', err);
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    }
+    
     document.getElementById('author').value = entry.author;
     document.getElementById('title').value = entry.title;
     document.getElementById('content').value = entry.content;
@@ -692,7 +729,12 @@ async function deleteDiaryEntry(id) {
       currentPage = 1;
       fetchDiaryEntries(currentPage);
     } else {
-      const errorData = await resp.json();
+      let errorData;
+      try {
+        errorData = await resp.json();
+      } catch {
+        errorData = { message: 'Lỗi không xác định từ server.' };
+      }
       showNotification(errorData.message || 'Có lỗi xảy ra, vui lòng thử lại.', true);
     }
   } catch (err) {

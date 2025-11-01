@@ -1,7 +1,15 @@
 require('dotenv').config();
+
+// Fail-fast check for SECRET_KEY
 const SECRET_KEY = process.env.SECRET_KEY;
+if (!SECRET_KEY) {
+  console.error('FATAL ERROR: SECRET_KEY environment variable is not set. Application cannot start.');
+  process.exit(1);
+}
+
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/love-diary';
 const PORT = process.env.PORT || 3000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -9,6 +17,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
 
 const USERS = [
@@ -27,7 +36,8 @@ mongoose.connect(MONGODB_URI, {
 }).then(() => console.log('Kết nối MongoDB thành công!')).catch(err => console.error('Lỗi kết nối MongoDB:', err));
 
 app.use(express.json());
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: CORS_ORIGIN }));
 
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/', express.static(path.join(__dirname, '../client')));
@@ -42,7 +52,8 @@ function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, SECRET_KEY);
     req.user = decoded;
     next();
-  } catch {
+  } catch (err) {
+    console.error('JWT verification failed:', err.message);
     res.status(403).json({ message: "Token không hợp lệ" });
   }
 }
@@ -107,7 +118,7 @@ async function deleteMediaFiles(mediaFiles) {
             await fs.promises.unlink(filePath);
         } catch (err) {
             if (err.code !== 'ENOENT') {
-                console.error(`Không thể xóa file ${filePath}:`, err);
+                console.error('Không thể xóa file:', filename, err.message);
             }
         }
     }
@@ -127,7 +138,10 @@ function uploadHandler(req, res, next) {
 app.get('/api/diary', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        let limit = parseInt(req.query.limit) || 10;
+        // Limit validation: max 100, min 1
+        if (limit > 100) limit = 100;
+        if (limit < 1) limit = 10;
         const skip = (page - 1) * limit;
         const total = await DiaryEntry.countDocuments();
         const entries = await DiaryEntry.find().sort({ date: -1 }).skip(skip).limit(limit);
@@ -151,10 +165,18 @@ app.get('/api/diary/:id', async (req, res) => {
 
 app.post('/api/diary', authMiddleware, uploadHandler, async (req, res) => {
     const filesToDelete = req.files ? req.files.map(f => f.filename) : [];
+    
+    // Validation
+    const title = req.body.title ? req.body.title.trim() : '';
+    if (!title) {
+        await deleteMediaFiles(filesToDelete);
+        return res.status(400).json({ message: 'Title không được để trống.' });
+    }
+    
     const newEntry = new DiaryEntry({
-        author: req.body.author,
-        title: req.body.title,
-        content: req.body.content,
+        author: req.user.username, // Use username from JWT token
+        title: title,
+        content: req.body.content ? req.body.content.trim() : '',
         media: filesToDelete,
         date: req.body.date ? new Date(req.body.date) : new Date()
     });
@@ -174,8 +196,22 @@ app.put('/api/diary/:id', authMiddleware, uploadHandler, async (req, res) => {
         if (!entry) {
             return res.status(404).json({ message: 'Không tìm thấy mục nhật ký.' });
         }
-        entry.title = req.body.title || entry.title;
-        entry.content = req.body.content || entry.content;
+        
+        // Ownership check
+        if (req.user.username !== entry.author) {
+            return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa mục nhật ký này.' });
+        }
+        
+        // Validation
+        const title = req.body.title ? req.body.title.trim() : entry.title;
+        if (!title) {
+            const filesToDelete = req.files ? req.files.map(f => f.filename) : [];
+            if (filesToDelete.length > 0) await deleteMediaFiles(filesToDelete);
+            return res.status(400).json({ message: 'Title không được để trống.' });
+        }
+        
+        entry.title = title;
+        entry.content = req.body.content ? req.body.content.trim() : entry.content;
         entry.date = req.body.date ? new Date(req.body.date) : entry.date;
 
         let mediaToKeep = [];
@@ -207,6 +243,12 @@ app.delete('/api/diary/:id', authMiddleware, async (req, res) => {
         if (!entry) {
             return res.status(404).json({ message: 'Không tìm thấy mục nhật ký.' });
         }
+        
+        // Ownership check
+        if (req.user.username !== entry.author) {
+            return res.status(403).json({ message: 'Bạn không có quyền xóa mục nhật ký này.' });
+        }
+        
         if (entry.media && entry.media.length > 0) {
             await deleteMediaFiles(entry.media);
         }
